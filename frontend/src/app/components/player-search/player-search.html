@@ -1,0 +1,73 @@
+<div class="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center pt-16">
+  <h1 class="text-3xl font-bold mb-6">Faceit Stats</h1>
+
+  <div class="flex gap-2 mb-6">
+    <input (keyup.enter)="search()" type="text" autocomplete="off" [(ngModel)]="username" placeholder="Nick gracza"
+      class="px-3 py-2 rounded bg-slate-800 border border-slate-700 focus:outline-none" name="username" />
+    <button (click)="search()" class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 font-semibold">
+      Szukaj
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-slate-300">Ładowanie...</div>
+  <div *ngIf="error" class="text-red-400">{{ error }}</div>
+
+  <div *ngIf="data" class="w-fit bg-slate-800 rounded-xl p-4 shadow mt-4">
+    <div class="flex items-start gap-4 mb-4">
+      <div class="relative">
+        <img [src]="getAvatar(data.player.avatar)" class="w-24 h-24 rounded-lg" />
+        <img [src]="data.player?.games?.cs2?.levelUrl" class="w-10 h-10 rounded absolute -top-2 -left-2" />
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-2xl font-semibold mb-2"> {{ data.player?.nickname || 'Brak nicku' }}</h2>
+          <img [src]="data.player?.countryFlag" class="w-6 h-4 rounded-sm" />
+        </div>
+        <p class="text-sm text-slate-400 mb-1">
+          {{ data.player?.memberSince }}
+        </p>
+        <h2 [ngClass]="getEloColor(data.player.games.cs2.elo)" class="font-bold text-xl">{{ data.player?.games?.cs2?.elo }} ELO</h2>
+      </div>
+    </div>
+    <div class="grid text-sm">
+      <h2 class="text-sm text-slate-400 mb-1">Last 20 matches</h2>
+      <div *ngFor="let match of data.playerStats"
+        class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3  flex gap-3">
+        <div class="flex flex-col justify-between w-full ">
+          <div class="grid grid-cols-8 items-center gap-1 w-full">
+            <div>
+              <img [src]="getMapImage(match.map)" class="w-15 h-6 rounded object-cover justify-center" />
+            </div>
+            <div [ngClass]="isWin(match.win)" class=" h-6 rounded text-base font-bold w-15 text-center">
+              {{ match.score }}
+            </div>
+            <div class="ml-1 text-xs text-slate-400 font-semibold">
+              <p>K - A - D</p>
+              <p class="text-xs text-slate-300"> {{ match.kills }} - {{ match.assists }} - {{ match.deaths }}</p>
+            </div>
+            <div class="ml-3 text-xs text-slate-400 font-semibold">
+              <p>HS%</p>
+              <p class="text-xs text-slate-300"> {{ match.headshotsPercent }}</p>
+            </div>
+            <div class="text-xs text-slate-400 font-semibold">
+              <p>Rating</p>
+              <p class="text-xs text-slate-300"> {{ match.kdRatio }}</p>
+            </div>
+            <div class="text-xs text-slate-400 font-semibold">
+              <p>Ago</p>
+              <p class="text-xs text-slate-300"> {{ match.whenFinished }}</p>
+            </div>
+            <div class="text-xs text-slate-400 font-semibold">
+              <p>Elo</p>
+              <span [ngClass]="getEloGainColor(match.win)" class="text-xs font-bold"> {{ matchEloEmpty(match.elo, data.player?.games?.cs2?.elo) }}</span>
+            </div>
+            <div class="text-xs text-slate-400 font-semibold ">
+              <p>Points</p>
+              <span [ngClass]="getEloGainColor(match.win)" class="text-xs font-bold">{{ matchEloEmpty(match.eloDelta, "---")  }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
