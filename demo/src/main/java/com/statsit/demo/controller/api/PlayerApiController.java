@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping(("/player"))
-//@RequestMapping("/api/player")
 @RequiredArgsConstructor
 public class PlayerApiController {
 
