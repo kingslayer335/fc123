@@ -1,22 +1,21 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {inject, Injectable} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {EMPTY, Observable} from 'rxjs';
 
 export interface PlayerResponse {
   player: any;
-  playerCs2: any;
-  playerStats: any;
+  cs2: any;
+  stats: any;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({providedIn: 'root'})
 export class PlayerApi {
+  private readonly http = inject(HttpClient);
+  private readonly API_URL = '/api/player';
 
-  constructor(private http: HttpClient) {}
-
-  getPlayer(username: string): Observable<PlayerResponse> {
-    const params = new HttpParams().set('username', username);
-    return this.http.get<PlayerResponse>('/api/player', { params });
+  getPlayer(username: string ): Observable<PlayerResponse> {
+    if (!username) return EMPTY;
+    const params = new HttpParams().set('username', username.trim());
+    return this.http.get<PlayerResponse>(this.API_URL, {params});
   }
 }

@@ -1,0 +1,23 @@
+server:
+  servlet:
+    context-path: /api
+
+faceit:
+  api:
+    open-base-url: https://open.faceit.com/data/v4/
+    stats-base-url: https://www.faceit.com/api/stats/v1/stats/time/users/
+    api-key: 84d932a6-3e3d-4986-9bfc-4d47ec6fb987
+
+spring:
+  application:
+    name: demo
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/faceit
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

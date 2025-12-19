@@ -1,16 +1,18 @@
 package com.statsit.demo.model.api;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class PlayerInfo {
+
     @JsonAlias("player_id")
     private String playerId;
-    private String nickname;   
+    private String nickname;
     private String avatar;
     private String country;
     private String coverImage;
-    private Games games;
     @JsonAlias("steam_id_64")
     private String steamId64;
     @JsonAlias("faceit_url")
@@ -18,26 +20,24 @@ public class PlayerInfo {
     private String verified;
     @JsonAlias("activated_at")
     private String memberSince;
-    public String getMemberSince() {
-        return memberSince.substring(0, 10);
-    }
-    public String getCountryFlag() {
-        return "https://flagcdn.com/w320/" + country + ".png";
-    }
+
+    @JsonAlias("memberships")
+    private List<String> memberships;
+
+    private Games games;
 
     @Data
     public static class Games {
         private Cs2 cs2;
+
         @Data
         public static class Cs2 {
             @JsonAlias("faceit_elo")
-            private String elo;
+            private Integer elo;
             @JsonAlias("skill_level")
-            private int level;
+            private Integer level;
+
             private String region;
-            public String getLevelUrl() {
-                return "/assets/images/levels/"+level+".svg";
-            }
         }
     }
 }

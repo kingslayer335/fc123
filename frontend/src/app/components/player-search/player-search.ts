@@ -1,8 +1,9 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { PlayerApi, PlayerResponse } from '../../services/api/player-api';
-import { PlayerDb } from '../../services/db/player-db';
+import {Component, signal, computed, inject} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {CommonModule} from '@angular/common';
+import {rxResource} from '@angular/core/rxjs-interop'
+import {PlayerApi, PlayerResponse} from '../../services/api/player-api';
+import {EMPTY} from 'rxjs';
 
 @Component({
   selector: 'app-player-search',
@@ -10,35 +11,70 @@ import { PlayerDb } from '../../services/db/player-db';
   templateUrl: './player-search.html',
   imports: [FormsModule, CommonModule],
 })
-
 export class PlayerSearch {
-  username = '';
-  data?: PlayerResponse;
-  loading = false;
-  error?: string;
+  private readonly api = inject(PlayerApi)
+  username = signal('');
+  private hasSearched = signal(false);
+  private searchUsername = signal<string | null>(null);
 
-  constructor(private api: PlayerApi, private db: PlayerDb, private cdr: ChangeDetectorRef) { }
+  playerResource = rxResource<PlayerResponse | null, string | null>({
+    params: () => this.searchUsername(),
+    stream: ({params}) => {
+      if (!params) {
+        return EMPTY;
+      }
+      return this.api.getPlayer(params);
+    },
+    defaultValue: null,
+  });
+
+  data = computed(() =>
+    this.playerResource.hasValue() ? this.playerResource.value() : null);
+  hasData = computed(() => this.playerResource.hasValue());
+  loading = computed(() => this.playerResource.isLoading());
+  error = computed(() => {
+    if (!this.hasSearched()) return undefined;
+    return this.playerResource.error() ? 'Player not found' : undefined;
+  });
+
+  search() {
+    const trimmed = this.username().trim();
+    if (trimmed) {
+      this.hasSearched.set(true);
+      this.searchUsername.set(trimmed);
+    }
+  }
+
+  playerAvatar = computed(() => this.data()?.player?.avatar || "assets/images/faceit_default.jpg");
 
   isWin(win: boolean) {
-    if (win == true) {
-      return "bg-emerald-500 text-emerald-950"
-    }
-    return "bg-[#CA3E3F] text-red-950"
+    return win ? "bg-emerald-500 text-emerald-950" : "bg-[#CA3E3F] text-red-950";
+  }
+
+  getLevelUrl(level: number) {
+    return `/assets/images/levels/${level}.svg`;
+  }
+
+  formatEloDelta(delta: number | null | undefined): string {
+    if (delta === null || delta === undefined) return '---';
+    return delta > 0 ? `+${delta}` : delta.toString();
   }
 
   getEloGainColor(stats: boolean) {
-    return stats == true
-      ? 'text-emerald-500'
-      : 'text-[#CA3E3F]';
+    return stats ? 'text-emerald-500' : 'text-[#CA3E3F]';
   }
-  matchEloEmpty(elo: string, elo2: string) {
-    if (elo === "") {
-      return elo2;
-    }
-    return elo;
+
+  matchEloEmpty(matchElo: number, defaultElo: number) {
+    return matchElo === null ? defaultElo : matchElo;
   }
+
   getMapImage(map: string) {
     return `/assets/images/maps/${map.toLowerCase()}.jpg`;
+  }
+
+  getCountryFlag(country: string | null | undefined) {
+    if (!country) return 'https://flagcdn.com/w320/un.png';
+    return `https://flagcdn.com/w320/${country.toLowerCase()}.png`;
   }
 
   getEloColor(elo: number) {
@@ -47,46 +83,5 @@ export class PlayerSearch {
     if (elo >= 900) return 'text-yellow-300';
     if (elo >= 500) return 'text-[#1CE400]';
     return 'text-gray-500';
-  }
-  getKdColor(kills: number, deaths: number) {
-    if (kills >= deaths) return 'text-[#14FF00]'
-    return 'text-[#ff0000]'
-  }
-
-  getAvatar(avatar: string) {
-    if (!avatar) {
-      return "assets/images/faceit_default.jpg"
-    }
-    return avatar;
-  }
-
-  search() {
-    if (!this.username.trim()) {
-      this.error = 'Enter a proper nickname';
-      return;
-    }
-
-    this.loading = true;
-    this.error = undefined;
-    this.data = undefined;
-
-    this.api.getPlayer(this.username).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.data = res;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error(err);
-        this.error = 'Error fetching player data';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-    this.db.savePlayer(this.username).subscribe({
-      next: (res) => {
-        this.data = res;
-      }
-    });
   }
 }
